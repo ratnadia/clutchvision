@@ -223,24 +223,43 @@ p_top10 <- ggplot(top10, aes(x = reorder(batsman, cpi), y = cpi)) +
 print(p_top10)
 ggsave("slide2_top10.png", p_top10, width = 12, height = 9, dpi = 300)
 
-cat("\n=== Creating Final Multi-Panel Plot ===\n")
+cat("\n=== Creating Simple Final Plot ===\n")
 
-p1 <- p_raw
-p2 <- p_shrunk
-p3 <- p_nbinom_dense
-p4 <- p_nbinom_qq
-p5 <- p_top20
-
-final_plot <- (p1 | p2) / (p3 | p4) / p5 +
-  plot_annotation(
-    title = "ClutchVision: Statistical Analysis of Death Overs Performance",
-    subtitle = "IPL Death Overs (16-20): Negative Binomial Distribution, Bayesian Shrinkage & Top Clutch Performers",
-    theme = theme(plot.title = element_text(size = 16, face = "bold"),
-                  plot.subtitle = element_text(size = 12))
+# Simple, clean top 10 bar chart with extra stats
+top10_final <- top_players %>% 
+  slice_head(n = 10) %>%
+  mutate(
+    batsman = reorder(batsman, cpi),
+    sr_label = round(shrunk_sr, 1)
   )
 
-print(final_plot)
-ggsave("final_multi_panel_plot.png", final_plot, width = 14, height = 20, dpi = 300)
+p_final <- ggplot(top10_final, aes(x = batsman, y = cpi, fill = cpi)) +
+  geom_col(width = 0.7, color = "black", alpha = 0.9) +
+  geom_text(aes(label = paste0("SR: ", sr_label)), 
+            vjust = -0.5, 
+            fontface = "bold", 
+            size = 3.5,
+            color = "black") +
+  scale_fill_viridis(option = "plasma", direction = -1, alpha = 0.8) +
+  labs(
+    title = "🏏 Top 10 Clutch Finishers in IPL Death Overs",
+    subtitle = "Bayesian-adjusted CPI | Min 100 balls | Overs 16-20",
+    x = "Batsman",
+    y = "Clutch Performance Index (CPI)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(size = 10, fontface = "bold", angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 11, fontface = "bold"),
+    plot.title = element_text(size = 20, face = "bold", family = "sans"),
+    plot.subtitle = element_text(size = 13, color = "darkgray"),
+    plot.margin = margin(20, 20, 20, 20)
+  ) +
+  coord_flip()
+
+print(p_final)
+ggsave("final_clutch_finishers.png", p_final, width = 12, height = 8, dpi = 300)
 
 cat("\n=== Files Generated ===\n")
 print(list.files(pattern = "*.png"))
